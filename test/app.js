@@ -1,25 +1,77 @@
-// import { error } from 'console'
-// import fs from 'fs'
+import fs from 'fs';
+import http from 'http';
+import event from 'events';
+
+// Read the HTML template asynchronously
+let customevnt = new event.EventEmitter()
+
+const readIndexFile = () => {
+    return new Promise((resolve, reject) => {
+        
+        fs.readFile('template/index.html', 'utf-8', (err, data) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(data);
+                
+            }
+        });
+    });
+};
+const jsonn = () => {
+    return new Promise((resolve, reject) => {
+        fs.readFile('data/users.json', 'utf-8', (err, data) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(data);
+            }
+        });
+    });
+};
+
+// Create an HTTP server
+const startServer = async () => {
+    try {
+        const indexContent = await readIndexFile();
+        const jsonread = await jsonn();
 
 
-// // fs.appendFileSync('./files/new.txt'," sahal")
-// // const text =fs.readFileSync('./files/new.txt','utf-8')
-// // console.log(text)
-// // fs.writeFile('./files/new.txt',"Rfzan",(err)=>
-// //     {
-// //         if(err)
-// //         {
-// //             console.log(err)
-// //         }
+        const server = http.createServer((req, res) => {
+            if (req.url === "/") {
+                customevnt.emit("newevent")
+                res.writeHead(200, { 'Content-Type': 'text/html' });
+                res.end(indexContent);
+            } else if (req.url === "/about") {
+                res.writeHead(200, { 'Content-Type': 'text/plain' });
+                res.end("About");
+            }
+             else if (req.url === "/users") {
+                res.writeHead(200, { 'Content-Type': 'text/plain' });
+                res.end(jsonread);
+            }
+             else {
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.end("Error");
+            }
+        });
 
-// //     })
-// fs.readFile('./files/new.txt','utf-8',(err,data)=>
-// {
-//     console.log(data)
-//     fs.readFile('./files/news.txt','utf-8',(err,data)=>
-//         {
-//             console.log(data)
-//         })
-// })
+        customevnt.on("newevent",()=>
+        {
+            console.log("Custom event is working")
+        })
+        server.on("request",()=>
+        {
+            console.log("req recieevedddd");
+        })
+        server.listen(3001, () => {
+            console.log("Server is listening on port 3001");
+        });
 
-// console.log("Reading file")
+    } catch (err) {
+        console.error("Error reading index file:", err);
+    }
+};
+
+// Start the server
+startServer();
